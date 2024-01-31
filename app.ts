@@ -1,0 +1,90 @@
+import express, { Request, Response } from 'express'
+import bodyParser from 'body-parser'
+import TelegramBot = require('node-telegram-bot-api')
+import dotenv from 'dotenv'
+
+dotenv.config()
+type Survey = {
+	name: string
+	phone: string
+}
+const app = express()
+
+app.use(bodyParser.json())
+
+const port = process.env.PORT
+const acces_token = process.env.SECRET_KEY
+const telegramBotToken = process.env.TGBOT_TOKEN || ''
+const bot = new TelegramBot(telegramBotToken, { polling: true })
+const survey: Survey[] = []
+const usersChatID: number[] = []
+let secret_key: string
+
+const apiRouter = express.Router()
+
+app.use('/api', apiRouter)
+
+bot.onText(/\/setToken/, async (msg) => {
+	const chatID = msg.chat.id
+	await bot.sendMessage(chatID, 'Введите секретный ключ')
+
+	const secretKeyInput = await new Promise<string>((resolve) => {
+		bot.once('text', (message) => {
+			if (message.text !== undefined) {
+				resolve(message.text)
+			} else {
+				resolve('')
+			}
+		})
+	})
+
+	secret_key = secretKeyInput
+	if (acces_token === secret_key) {
+		usersChatID.push(chatID)
+		bot.sendMessage(chatID, 'Секретный ключ сохранен.')
+	} else {
+		bot.sendMessage(chatID, 'Вы ввели не правильный секретный ключ.')
+	}
+})
+
+const getSurvey = (
+	secretKey: string,
+	usersChatID: number[],
+	survey: Survey
+) => {
+	let isValid = acces_token === secretKey
+	if (!isValid) {
+		usersChatID.map((chatID) => {
+			bot.sendMessage(chatID, 'Вы не ввели секретный ключ.')
+			return
+		})
+	}
+	if (isValid) {
+		usersChatID.map((chatID) => {
+			bot.sendMessage(
+				chatID,
+				`Новая Анкета \n\nИмя: ${survey.name}\nНомер: ${survey.phone}`
+			)
+		})
+	}
+}
+apiRouter.post('/telegramBot', (req: Request, res: Response) => {
+	const { phone, name } = req.body
+
+	if (!phone || !name) {
+		res
+			.status(400)
+			.send('Неверный формат запроса. Укажите "phone" и "name" в теле запроса.')
+		return
+	}
+
+	const newSurvey: Survey = { phone, name }
+
+	survey.push(newSurvey)
+	getSurvey(secret_key, usersChatID, newSurvey)
+	res.send(200)
+})
+
+app.listen(port, () => {
+	console.log(`Сервер запущен на порту ${port}`)
+})
