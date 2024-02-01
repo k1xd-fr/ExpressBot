@@ -85,7 +85,7 @@ const getSurvey = (
 		newUserChatID.map((chatID) => {
 			bot.sendMessage(
 				chatID,
-				`Новая Анкета \n\nИмя: ${survey.name}\nНомер: ${survey.phone}`
+				`Новая Анкета \n\nИмя: ${survey.name}\nНомер: +${survey.phone}`
 			)
 		})
 	}
