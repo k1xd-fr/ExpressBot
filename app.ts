@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express'
 import bodyParser from 'body-parser'
 import TelegramBot = require('node-telegram-bot-api')
 import dotenv from 'dotenv'
+import cors from 'cors'
 
 dotenv.config()
 type Survey = {
@@ -9,6 +10,7 @@ type Survey = {
 	phone: string
 }
 const app = express()
+app.use(cors())
 
 app.use(bodyParser.json())
 
@@ -69,6 +71,10 @@ const getSurvey = (
 	}
 }
 apiRouter.post('/telegramBot', (req: Request, res: Response) => {
+	res.header('Access-Control-Allow-Origin', 'https://metalabs.kg:8083')
+	res.header('Access-Control-Allow-Methods', 'POST')
+	res.header('Access-Control-Allow-Headers', 'Content-Type')
+
 	const { phone, name } = req.body
 
 	if (!phone || !name) {
@@ -82,7 +88,7 @@ apiRouter.post('/telegramBot', (req: Request, res: Response) => {
 
 	survey.push(newSurvey)
 	getSurvey(secret_key, usersChatID, newSurvey)
-	res.send(200)
+	res.sendStatus(200)
 })
 
 app.listen(port, () => {
