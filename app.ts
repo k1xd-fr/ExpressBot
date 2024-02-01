@@ -87,6 +87,11 @@ const getSurvey = (
 		})
 	}
 }
+bot.onText(/\/delToken/, (msg) => {
+	const chatID = msg.chat.id
+	secret_key = ''
+	bot.sendMessage(chatID, 'ваш секретный ключ удален.')
+})
 apiRouter.post('/telegramBot', (req: Request, res: Response) => {
 	res.header('Access-Control-Allow-Origin', 'https://metalabs.kg:8083')
 	res.header('Access-Control-Allow-Methods', 'POST')
