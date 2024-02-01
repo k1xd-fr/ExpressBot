@@ -2,7 +2,24 @@ import express, { Request, Response } from 'express'
 import bodyParser from 'body-parser'
 import TelegramBot = require('node-telegram-bot-api')
 import dotenv from 'dotenv'
-import cors from 'cors'
+import cors, { CorsOptions } from 'cors'
+
+const whitelist = ['https://metalabs.kg:8083']
+
+const corsOptions: CorsOptions = {
+	origin: (
+		origin: string | undefined,
+		callback: (err: Error | null, allow?: boolean) => void
+	) => {
+		if (!origin || whitelist.indexOf(origin) !== -1) {
+			callback(null, true)
+		} else {
+			callback(new Error('Not allowed by CORS'))
+		}
+	},
+	methods: 'POST',
+	optionsSuccessStatus: 204,
+}
 
 dotenv.config()
 type Survey = {
@@ -10,7 +27,7 @@ type Survey = {
 	phone: string
 }
 const app = express()
-app.use(cors())
+app.use(cors(corsOptions))
 
 app.use(bodyParser.json())
 
