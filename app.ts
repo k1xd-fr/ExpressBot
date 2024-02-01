@@ -4,7 +4,7 @@ import TelegramBot = require('node-telegram-bot-api')
 import dotenv from 'dotenv'
 import cors, { CorsOptions } from 'cors'
 
-const whitelist = ['https://metalabs.kg:8083']
+const whitelist = ['https://metalabs.kg']
 
 const corsOptions: CorsOptions = {
 	origin: (
