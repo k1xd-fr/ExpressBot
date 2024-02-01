@@ -72,14 +72,17 @@ const getSurvey = (
 	survey: Survey
 ) => {
 	let isValid = acces_token === secretKey
+
 	if (!isValid) {
-		usersChatID.map((chatID) => {
+		const newUserChatID = [...new Set(usersChatID)]
+		newUserChatID.map((chatID: number) => {
 			bot.sendMessage(chatID, 'Вы не ввели секретный ключ.')
 			return
 		})
 	}
 	if (isValid) {
-		usersChatID.map((chatID) => {
+		const newUserChatID = [...new Set(usersChatID)]
+		newUserChatID.map((chatID) => {
 			bot.sendMessage(
 				chatID,
 				`Новая Анкета \n\nИмя: ${survey.name}\nНомер: ${survey.phone}`
