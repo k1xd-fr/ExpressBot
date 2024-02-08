@@ -5,7 +5,8 @@ import dotenv from 'dotenv'
 import cors, { CorsOptions } from 'cors'
 import morgan from 'morgan'
 import fs from 'fs'
-import path = require('path')
+import path from 'path'
+
 const whitelist = ['https://metalabs.kg']
 
 const corsOptions: CorsOptions = {
@@ -27,13 +28,12 @@ dotenv.config()
 
 const app = express()
 app.use(cors(corsOptions))
-const _dirname = path.resolve()
+const accessLogDirectory = path.join(__dirname, 'logs', 'access')
+const errorLogDirectory = path.join(__dirname, 'logs', 'errors')
 
-const accessLogDirectory = path.join(_dirname, 'logs/access')
-const errorLogDirectory = path.join(_dirname, './logs/errors')
+fs.mkdirSync(accessLogDirectory, { recursive: true })
+fs.mkdirSync(errorLogDirectory, { recursive: true })
 
-fs.existsSync(accessLogDirectory) || fs.mkdirSync(accessLogDirectory)
-fs.existsSync(errorLogDirectory) || fs.mkdirSync(errorLogDirectory)
 const formatDate = () => {
 	const now = new Date()
 	const day = String(now.getDate()).padStart(2, '0')
@@ -43,22 +43,15 @@ const formatDate = () => {
 }
 
 app.use(bodyParser.json())
-const appPath = __dirname
+
 const logFileName = `access_${formatDate()}.log`
 const errorLogFileName = `error_${formatDate()}.log`
-
-if (!fs.existsSync(accessLogDirectory)) {
-	fs.mkdirSync(accessLogDirectory, { recursive: true })
-}
-
-if (!fs.existsSync(errorLogDirectory)) {
-	fs.mkdirSync(errorLogDirectory, { recursive: true })
-}
 
 const accesslogFilePath = path.join(accessLogDirectory, logFileName)
 const errorLogFilePath = path.join(errorLogDirectory, errorLogFileName)
 const accessLogStream = fs.createWriteStream(accesslogFilePath, { flags: 'a' })
 const errorLogStream = fs.createWriteStream(errorLogFilePath, { flags: 'a' })
+
 morgan.token('date', () => {
 	const now = new Date()
 	const hours = String(now.getHours()).padStart(2, '0')
@@ -66,7 +59,8 @@ morgan.token('date', () => {
 	const seconds = String(now.getSeconds()).padStart(2, '0')
 	return `${hours}:${minutes}:${seconds}`
 })
-const format = `:remote-addr - :remote-user [:date] ":method :url HTTP/:http-version" :status :res[content-length] "-" ":user-agent" - ${appPath}`
+
+const format = `:remote-addr - :remote-user [:date] ":method :url HTTP/:http-version" :status :res[content-length] "-" ":user-agent" - ${__dirname}`
 
 app.use(
 	morgan(format, {
@@ -81,6 +75,7 @@ app.use(
 		skip: (req: Request, res: Response) => res.statusCode < 400,
 	})
 )
+
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 	res.status(err.status || 500)
 	res.send({
@@ -90,8 +85,9 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 		},
 	})
 })
+
 const port = process.env.PORT
-const acces_token = process.env.SECRET_KEY
+const access_token = process.env.SECRET_KEY
 const telegramBotToken = process.env.TGBOT_TOKEN || ''
 const bot = new TelegramBot(telegramBotToken, { polling: true })
 const usersChatID: number[] = []
@@ -104,6 +100,7 @@ type Survey = {
 	name: string
 	phone: string
 }
+
 bot.on('polling_error', (error) => {
 	console.error('Telegram Bot polling error:', error)
 })
@@ -114,18 +111,14 @@ bot.onText(/\/setToken/, async (msg) => {
 
 	const secretKeyInput = await new Promise<string>((resolve) => {
 		bot.once('text', (message) => {
-			if (message.text !== undefined) {
-				resolve(message.text)
-			} else {
-				resolve('')
-			}
+			resolve(message.text || '')
 		})
 	})
 
 	secret_key = secretKeyInput
 	const similarChatIDIndex = usersChatID.findIndex((id) => id === chatID)
 	if (similarChatIDIndex === -1) {
-		if (acces_token === secret_key) {
+		if (access_token === secret_key) {
 			usersChatID.push(chatID)
 			bot.sendMessage(chatID, 'Секретный ключ сохранен.')
 		} else {
@@ -141,16 +134,14 @@ const getSurvey = (
 	usersChatID: number[],
 	survey: Survey
 ) => {
-	let isValid = acces_token === secretKey
+	const isValid = access_token === secretKey
 
 	if (!isValid) {
-		usersChatID.map((chatID: number) => {
+		usersChatID.forEach((chatID: number) => {
 			bot.sendMessage(chatID, 'Вы не ввели секретный ключ.')
-			return
 		})
-	}
-	if (isValid) {
-		usersChatID.map((chatID) => {
+	} else {
+		usersChatID.forEach((chatID) => {
 			bot.sendMessage(
 				chatID,
 				`Новая Анкета \n\nИмя: ${survey.name}\nНомер: +${survey.phone}`
@@ -158,11 +149,13 @@ const getSurvey = (
 		})
 	}
 }
+
 bot.onText(/\/delToken/, (msg) => {
 	const chatID = msg.chat.id
 	secret_key = ''
-	bot.sendMessage(chatID, 'ваш секретный ключ удален.')
+	bot.sendMessage(chatID, 'Ваш секретный ключ удален.')
 })
+
 apiRouter.post('/telegramBot', (req: Request, res: Response) => {
 	const { phone, name } = req.body
 
