@@ -28,9 +28,9 @@ dotenv.config()
 
 const app = express()
 app.use(cors(corsOptions))
-const directory = '/root/ExpressBot/logs/access'
-const accessLogDirectory = path.join(directory, '/logs/access')
-const errorLogDirectory = path.join(directory, '/logs/errors')
+const accessLogDirectory = path.join(__dirname, '/logs/access')
+const errorLogDirectory = path.join(__dirname, '/logs/errors')
+console.log(__dirname)
 
 fs.mkdirSync(accessLogDirectory, { recursive: true })
 fs.mkdirSync(errorLogDirectory, { recursive: true })
@@ -61,7 +61,7 @@ morgan.token('date', () => {
 	return `${hours}:${minutes}:${seconds}`
 })
 
-const format = `:remote-addr - :remote-user [:date] ":method :url HTTP/:http-version" :status :res[content-length] "-" ":user-agent" - ${directory}`
+const format = `:remote-addr - :remote-user [:date] ":method :url HTTP/:http-version" :status :res[content-length] "-" ":user-agent" - ${__dirname}`
 
 app.use(
 	morgan(format, {
