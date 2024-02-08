@@ -28,8 +28,8 @@ dotenv.config()
 
 const app = express()
 app.use(cors(corsOptions))
-const accessLogDirectory = path.join(__dirname, 'logs', 'access')
-const errorLogDirectory = path.join(__dirname, 'logs', 'errors')
+const accessLogDirectory = path.join(__dirname, '/logs/access')
+const errorLogDirectory = path.join(__dirname, '/logs/errors')
 
 fs.mkdirSync(accessLogDirectory, { recursive: true })
 fs.mkdirSync(errorLogDirectory, { recursive: true })
