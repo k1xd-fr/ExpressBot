@@ -27,8 +27,10 @@ dotenv.config()
 
 const app = express()
 app.use(cors(corsOptions))
-const accessLogDirectory = path.join(__dirname, 'logs/access')
-const errorLogDirectory = path.join(__dirname, './logs/errors')
+const _dirname = path.resolve()
+
+const accessLogDirectory = path.join(_dirname, 'logs/access')
+const errorLogDirectory = path.join(_dirname, './logs/errors')
 
 fs.existsSync(accessLogDirectory) || fs.mkdirSync(accessLogDirectory)
 fs.existsSync(errorLogDirectory) || fs.mkdirSync(errorLogDirectory)
@@ -44,6 +46,15 @@ app.use(bodyParser.json())
 const appPath = __dirname
 const logFileName = `access_${formatDate()}.log`
 const errorLogFileName = `error_${formatDate()}.log`
+
+if (!fs.existsSync(accessLogDirectory)) {
+	fs.mkdirSync(accessLogDirectory, { recursive: true })
+}
+
+if (!fs.existsSync(errorLogDirectory)) {
+	fs.mkdirSync(errorLogDirectory, { recursive: true })
+}
+
 const accesslogFilePath = path.join(accessLogDirectory, logFileName)
 const errorLogFilePath = path.join(errorLogDirectory, errorLogFileName)
 const accessLogStream = fs.createWriteStream(accesslogFilePath, { flags: 'a' })
